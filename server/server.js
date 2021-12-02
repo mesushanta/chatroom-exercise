@@ -18,11 +18,18 @@ server.listen(PORT, () =>{
 
 io.on('connection', (socket) => {
     socket.on('setUser', (user) => {
-        active_users.push(user);
-        socket.emit("currentUser", (active_users));
+        let new_user = {
+            id: socket.id,
+            name: user
+        }
+        active_users.push(new_user);
+        socket.emit("displayMessage",messages);
+        socket.emit("currentUser", (user));
+        io.emit("showAllUsers", (active_users));
     })
 
     socket.on('sendToAll', (message) =>{
+        socket.id
         messages.push(message);
         io.emit("displayMessage", (messages));
     });
@@ -32,7 +39,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', function() {
-        console.log('Got disconnect!');
+        console.log(socket.id + ' has Got disconnect!');
     });
 });
 

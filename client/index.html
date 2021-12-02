@@ -87,12 +87,10 @@
     const LoginForm = document.getElementById('loginForm');
     const All_Users_list = document.getElementById('all_users_list');
 
-    let this_user = '';
     let new_data = [];
-    let all_active_users = [];
+    let this_user = '';
 
     LoginBtn.addEventListener("click", function () {
-        this_user = User.value;
         socket.emit('setUser', User.value);
     })
     SendToALlButton.addEventListener("click", function () {
@@ -100,7 +98,6 @@
             "user": this_user,
             "msg": MessageInput.value
         }
-
         socket.emit('sendToAll',new_data );
     });
 
@@ -114,11 +111,10 @@
     // });
 
     socket.on('currentUser', (user) => {
-        all_active_users = user;
-        document.getElementById('show_username').innerHTML = this_user;
+        this_user = user;
+        document.getElementById('show_username').innerHTML = user;
         LoginForm.classList.add('hidden');
         Wrap.classList.remove("hidden");
-        showAllUsers(all_active_users);
     });
 
 
@@ -138,7 +134,7 @@
         Target.innerHTML = data;
     });
 
-    function showAllUsers(users) {
+    socket.on('showAllUsers', (users) => {
         let all_ol_users = "";
         users.forEach(user => {
             all_ol_users += '<li class="list-none px-8 my-2 flex justify-auto h-12">' +
@@ -147,12 +143,12 @@
                 '<span class="self-center mx-2 w-8 h-8 bg-blue-400 rounded-full">' +
                 '</span>' +
                 '<span class="self-center text-white rounded-full">' +
-                user +
+                user.name +
                 '</span>' +
                 '</li>'
         });
         All_Users_list.innerHTML = all_ol_users;
-    }
+    });
 </script>
 
 </body>

@@ -12,7 +12,12 @@
 <body>
 <div class="max-w-screen-lg mx-auto px-6 py-8 mt-8">
 
-    <div class="relative">
+    <div id="loginForm">
+        <input type="text" id="username" class="w-60 inline-block tex-gray-500 h-10 px-4 border border-gray-300" placeholder="username">
+        <button id="loginBtn" class="inline-block text-white px-8 h-10 mx-4 bg-blue-500 tex-white hover:bg-blue-600 border border-blue-700">Login</button>
+    </div>
+    <div id="wrap" class="relative hidden">
+        Welcome <span id="show_username"></span>
         <div class="w-full border border-blue-300 bg-blue-50" style="height: 700px;">
             <div id="target" class="mb-20 overflow-y-scroll px-8 py-6 flex flex-col-reverse" style="height: 600px;">
 
@@ -26,30 +31,70 @@
                 <button id="send_to_all" class="w-20 h-12 mt-2 inline-block float-right bg-blue-500 hover:bg-blue-600 text-white" type="submit" name="button">Send</button>
             </div>
         </div>
+        <button id="send_to_me"  class="w-40 h-12 mt-2 inline-block float-right bg-blue-500 hover:bg-blue-600 text-white" type="submit" name="button">Send to me</button>
+
     </div>
-    <button id="send_to_me"  class="w-40 h-12 mt-2 inline-block float-right bg-blue-500 hover:bg-blue-600 text-white" type="submit" name="button">Send to me</button>
 
 </div>
 
 <script>
     let socket = io.connect();
+    const LoginBtn = document.getElementById('loginBtn');
+    const User = document.getElementById('username');
     const SendToALlButton = document.getElementById('send_to_all');
     const SendToMeButton = document.getElementById('send_to_me');
     const MessageInput = document.getElementById('message_input');
-    const Target = document.getElementById('target')
+    const Target = document.getElementById('target');
+    const Wrap = document.getElementById('wrap');
+    const LoginForm = document.getElementById('loginForm');
 
+    let this_user = '';
+    let new_data = [];
+
+    LoginBtn.addEventListener("click", function () {
+        socket.emit('setUser', User.value);
+    })
     SendToALlButton.addEventListener("click", function () {
-        socket.emit('sendToAll', MessageInput.value);
+        new_data = {
+            "user": this_user,
+            "msg": MessageInput.value
+        }
+
+        socket.emit('sendToAll',new_data );
     });
 
-    SendToALlButton.addEventListener("click", function () {
-        socket.emit('sendToMe', MessageInput.value);
+    SendToMeButton.addEventListener("click", function () {
+        new_data = {
+            "user": this_user,
+            "msg": MessageInput.value
+        }
+
+        socket.emit('sendToMe',new_data );
     });
+
+    socket.on('currentUser', (user) => {
+        this_user = user;
+        document.getElementById('show_username').innerHTML = user;
+        LoginForm.classList.add('hidden');
+        Wrap.classList.remove("hidden");
+    });
+
 
     socket.on('displayMessage', (message) => {
-        Target.innerHTML += '<br>'+message;
+        data = '';
+        message.forEach(msg => {
+            data += '<div class="block w-full my-2">' +
+                '<span class="font-bold">' +
+                msg.user +
+                ' : ' +
+                '</span>' +
+                '<span>' +
+                msg.msg
+            '</span>'
+            '</div>';
+        });
+        Target.innerHTML = data;
     });
-
 
 </script>
 

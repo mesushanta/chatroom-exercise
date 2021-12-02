@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" integrity="sha512-wnea99uKIC3TJF7v4eKk4Y+lMz2Mklv18+r4na2Gn1abDRPPOeef95xTzdwGD9e6zXJBteMIhZ1+68QC5byJZw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="/socket.io/socket.io.js"></script>
+    <title>Chatrooms</title>
+
+</head>
+<body>
+<div class="max-w-screen-lg mx-auto px-6 py-8 mt-8">
+
+    <div class="relative">
+        <div class="w-full border border-blue-300 bg-blue-50" style="height: 700px;">
+            <div id="target" class="mb-20 overflow-y-scroll px-8 py-6 flex flex-col-reverse" style="height: 600px;">
+
+                <div class="block w-full my-2">
+                    <span class="font-bold">Name :</span> <span class="font-light">Example message</span>
+                </div>
+
+            </div>
+            <div class="absolute bottom-0 left-0 h-20 content-border px-4 py-2 w-full bg-blue-300 border-t border-blue-300">
+                <input id="message_input" class="w-full h-12 mt-2 px-4 border border-gray-300 inline-block" type="text"  placeholder="type your message here ..." style="width: calc(100% - 6rem)">
+                <button id="send_to_all" class="w-20 h-12 mt-2 inline-block float-right bg-blue-500 hover:bg-blue-600 text-white" type="submit" name="button">Send</button>
+            </div>
+        </div>
+    </div>
+    <button id="send_to_me"  class="w-40 h-12 mt-2 inline-block float-right bg-blue-500 hover:bg-blue-600 text-white" type="submit" name="button">Send to me</button>
+
+</div>
+
+<script>
+    let socket = io.connect();
+    const SendToALlButton = document.getElementById('send_to_all');
+    const SendToMeButton = document.getElementById('send_to_me');
+    const MessageInput = document.getElementById('message_input');
+    const Target = document.getElementById('target')
+
+    SendToALlButton.addEventListener("click", function () {
+        socket.emit('sendToAll', MessageInput.value);
+    });
+
+    SendToALlButton.addEventListener("click", function () {
+        socket.emit('sendToMe', MessageInput.value);
+    });
+
+    socket.on('displayMessage', (message) => {
+        Target.innerHTML += '<br>'+message;
+    });
+
+
+</script>
+
+</body>
+</html>

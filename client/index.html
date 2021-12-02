@@ -10,28 +10,66 @@
 
 </head>
 <body>
-<div class="max-w-screen-lg mx-auto px-6 py-8 mt-8">
+<div class="w-screen h-screen">
 
-    <div id="loginForm">
+
+    <div id="loginForm" class="mx-auto my-20 text-center">
         <input type="text" id="username" class="w-60 inline-block tex-gray-500 h-10 px-4 border border-gray-300" placeholder="username">
         <button id="loginBtn" class="inline-block text-white px-8 h-10 mx-4 bg-blue-500 tex-white hover:bg-blue-600 border border-blue-700">Login</button>
     </div>
-    <div id="wrap" class="relative hidden">
-        Welcome <span id="show_username"></span>
-        <div class="w-full border border-blue-300 bg-blue-50" style="height: 700px;">
-            <div id="target" class="mb-20 overflow-y-scroll px-8 py-6 flex flex-col-reverse" style="height: 600px;">
 
-                <div class="block w-full my-2">
-                    <span class="font-bold">Name :</span> <span class="font-light">Example message</span>
+
+    <div id="wrap" class="grid grid-cols-5 relative hidden">
+
+        <div class="col-span-1 h-screen">
+            <div class="bg-gray-800 text-white w-full h-screen">
+                <h2 class="px-8 pt-10 pb-4 mx-4 text-gray-200 text-2xl font-light border-b-2 border-dashed border-gray-100">Active users</h2>
+
+                <div id="all_users_list">
+
                 </div>
+<!--                <li class="list-none px-8 my-2 flex justify-auto h-12">-->
+<!--                    <span class="self-center w-2 h-2 bg-green-300 rounded-full">-->
 
-            </div>
-            <div class="absolute bottom-0 left-0 h-20 content-border px-4 py-2 w-full bg-blue-300 border-t border-blue-300">
-                <input id="message_input" class="w-full h-12 mt-2 px-4 border border-gray-300 inline-block" type="text"  placeholder="type your message here ..." style="width: calc(100% - 6rem)">
-                <button id="send_to_all" class="w-20 h-12 mt-2 inline-block float-right bg-blue-500 hover:bg-blue-600 text-white" type="submit" name="button">Send</button>
+<!--                    </span>-->
+<!--                    <span class="self-center mx-2 w-8 h-8 bg-blue-400 rounded-full">-->
+
+<!--                    </span>-->
+<!--                    <span class="self-center text-white rounded-full">-->
+<!--                        First user-->
+<!--                    </span>-->
+<!--                </li>-->
+
             </div>
         </div>
-        <button id="send_to_me"  class="w-40 h-12 mt-2 inline-block float-right bg-blue-500 hover:bg-blue-600 text-white" type="submit" name="button">Send to me</button>
+
+        <div class="relative col-span-4">
+
+            <div class="w-full  flex justify-between h-20 bg-white shadow-xl">
+                <div class="px-8 self-center">
+                    <span class="inline-block text-red-600 text-md">my</span>
+                    <span class="inline-block text-black text-2xl">CHAT</span>
+                    <span class="inline-block text-blue-600 text-md">box</span>
+                </div>
+                <div class="px-8 self-center text-lg text-gray-500">
+                    Welcome <span id="show_username"></span>
+                </div>
+            </div>
+
+
+            <div class="w-full" style="calc(100vh - 80px)">
+                <div id="target" class="mb-20 overflow-y-scroll px-8 py-6 flex flex-col-reverse" style="calc(100vh - 100px)">
+
+                </div>
+                <div class="absolute  bottom-0 right-0 h-20 content-border px-4 py-2 w-full bg-blue-300 border-t border-blue-300">
+                    <input id="message_input" class="w-full h-12 mt-2 px-4 border border-gray-300 inline-block" type="text"  placeholder="type your message here ..." style="width: calc(100% - 6rem)">
+                    <button id="send_to_all" class="w-20 h-12 mt-2 inline-block float-right bg-blue-500 hover:bg-blue-600 text-white" type="submit" name="button">Send</button>
+                </div>
+            </div>
+<!--            <button id="send_to_me"  class="w-40 h-12 mt-2 inline-block float-right bg-blue-500 hover:bg-blue-600 text-white" type="submit" name="button">Send to me</button>-->
+
+        </div>
+
 
     </div>
 
@@ -42,16 +80,19 @@
     const LoginBtn = document.getElementById('loginBtn');
     const User = document.getElementById('username');
     const SendToALlButton = document.getElementById('send_to_all');
-    const SendToMeButton = document.getElementById('send_to_me');
+    // const SendToMeButton = document.getElementById('send_to_me');
     const MessageInput = document.getElementById('message_input');
     const Target = document.getElementById('target');
     const Wrap = document.getElementById('wrap');
     const LoginForm = document.getElementById('loginForm');
+    const All_Users_list = document.getElementById('all_users_list');
 
     let this_user = '';
     let new_data = [];
+    let all_active_users = [];
 
     LoginBtn.addEventListener("click", function () {
+        this_user = User.value;
         socket.emit('setUser', User.value);
     })
     SendToALlButton.addEventListener("click", function () {
@@ -63,25 +104,26 @@
         socket.emit('sendToAll',new_data );
     });
 
-    SendToMeButton.addEventListener("click", function () {
-        new_data = {
-            "user": this_user,
-            "msg": MessageInput.value
-        }
-
-        socket.emit('sendToMe',new_data );
-    });
+    // SendToMeButton.addEventListener("click", function () {
+    //     new_data = {
+    //         "user": this_user,
+    //         "msg": MessageInput.value
+    //     }
+    //
+    //     socket.emit('sendToAll',new_data );
+    // });
 
     socket.on('currentUser', (user) => {
-        this_user = user;
-        document.getElementById('show_username').innerHTML = user;
+        all_active_users = user;
+        document.getElementById('show_username').innerHTML = this_user;
         LoginForm.classList.add('hidden');
         Wrap.classList.remove("hidden");
+        showAllUsers(all_active_users);
     });
 
 
     socket.on('displayMessage', (message) => {
-        data = '';
+        let data = '';
         message.forEach(msg => {
             data += '<div class="block w-full my-2">' +
                 '<span class="font-bold">' +
@@ -96,6 +138,21 @@
         Target.innerHTML = data;
     });
 
+    function showAllUsers(users) {
+        let all_ol_users = "";
+        users.forEach(user => {
+            all_ol_users += '<li class="list-none px-8 my-2 flex justify-auto h-12">' +
+                ' <span class="self-center w-2 h-2 bg-green-300 rounded-full">' +
+                '</span>' +
+                '<span class="self-center mx-2 w-8 h-8 bg-blue-400 rounded-full">' +
+                '</span>' +
+                '<span class="self-center text-white rounded-full">' +
+                user +
+                '</span>' +
+                '</li>'
+        });
+        All_Users_list.innerHTML = all_ol_users;
+    }
 </script>
 
 </body>

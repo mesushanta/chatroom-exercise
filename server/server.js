@@ -2,8 +2,8 @@ const express = require('express');
 const http = require('http');
 app = express();
 const PORT = 9191;
-let user = false;
 let messages = [];
+let active_users = [];
 
 const clientPath = `${__dirname}/../client`;
 const server = http.createServer(app);
@@ -18,7 +18,8 @@ server.listen(PORT, () =>{
 
 io.on('connection', (socket) => {
     socket.on('setUser', (user) => {
-        socket.emit("currentUser", (user));
+        active_users.push(user);
+        socket.emit("currentUser", (active_users));
     })
 
     socket.on('sendToAll', (message) =>{
@@ -28,6 +29,10 @@ io.on('connection', (socket) => {
 
     socket.on('sendToMe', (message) =>{
         socket.emit("displayMessage", (message));
+    });
+
+    socket.on('disconnect', function() {
+        console.log('Got disconnect!');
     });
 });
 

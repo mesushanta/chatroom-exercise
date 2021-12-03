@@ -7,11 +7,11 @@ const salt = bcrypt.genSalt(10);
 const PORT = 9191;
 let messages = [];
 let all_users = []; // id, username, email, avatar, is_online, color
-let active_users = [];
 
 const clientPath = `${__dirname}/../client`;
 const server = http.createServer(app);
-const Emailregex = '/(.+)@(.+){2,}\.(.+){2,}/';
+const EmailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
 
 app.use(express.static(clientPath));
 
@@ -23,42 +23,51 @@ server.listen(PORT, () =>{
 
 io.on('connection', (socket) => {
 
+    console.log(all_users);
+
     socket.on('login', (user) => {
         let this_user = [];
         let email = user.email;
-        let password = user.password;
+        let password = user.password.toString();
+        let hash = bcrypt.hash(password, parseInt(salt));
         let errors = [];
-
-        if(!email || email == '') {
+        if(email && email != '') {
             this_user = all_users.filter(function(usr) {
-                return ((usr.email == email ) && (usr.password ==  bcrypt.hash(password, salt)));
+                return (usr.email == email);
             });
-            console.log(this_user);
 
             if(this_user.length == 1) {
-                let index = all_users.findIndex((usr => usr.email == email));
-                all_users[index].is_online = true;
-                socket.emit("displayMessage",messages);
-                socket.emit("currentUser", (this_user));
-                io.emit("showAllUsers", (active_users));
-            }
-            else {
-                errors.push({error :"Credentials does not match"});
-                socket.emit("showLoginErrors", (errors));
+                console.log('yes email')
+                let validPassword = bcrypt.compare(hash, this_user.password);
+                if (!validPassword) {
+                        errors.push({error :"Credentials does not match"});
+                        socket.emit("showLoginErrors", (errors));
+                    }
+                    else {
+                        let index = all_users.findIndex((usr => usr.email == email));
+                        all_users[index].is_online = true;
+                        all_users[index].id = socket.id;
+                        socket.emit("displayMessage",messages);
+                        socket.emit("currentUser", (this_user));
+                        io.emit("showAllUsers", (all_users));
+                    }
             }
         }
 
     });
     socket.on('register', (user) => {
-        console.log('two');
+        let password = '';
         let this_user = [];
         let errors = [];
+        if(user.password && user.password != '') {
+            password = bcrypt.hash(user.password.toString(), parseInt(salt));
+        }
         let new_user = {
             id: socket.id,
             fullname: user.fullname,
             username: user.username,
             email: user.email,
-            password: bcrypt.hash(user.password, salt),
+            password: password,
             avatar: 'default.jpg',
             is_online: true
         }
@@ -66,12 +75,10 @@ io.on('connection', (socket) => {
 
         if(!new_user.fullname || new_user.fullname == '') {
             errors.push({fullname : "Please enter fullname"});
-            socket.emit("showRegisterErrors", (errors));
         }
 
         if(!new_user.username || new_user.username == '') {
             errors.push({username : "Please choose an username"});
-            socket.emit("showRegisterErrors", (errors));
         }
         else {
             let find_user = all_users.filter(function(usr) {
@@ -83,10 +90,9 @@ io.on('connection', (socket) => {
         }
         if(!new_user.email || new_user.email == '') {
             errors.push({email : "Please provide your email address"});
-            socket.emit("showRegisterErrors", (errors));
         }
         else {
-            if(!Emailregex.test(new_user.email)) {
+            if(!EmailRegex.test(new_user.email)) {
                 errors.push({email : "Invalid email address"});
             }
             else {
@@ -105,7 +111,8 @@ io.on('connection', (socket) => {
         else {
             all_users.push(new_user);
             socket.emit("displayMessage",messages);
-            socket.emit("currentUser", (user.username));
+            socket.emit("currentUser", (new_user));
+            io.emit("showAllUsers", (all_users));
         }
 
     });
@@ -119,11 +126,11 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', function() {
-        active_users = active_users.filter(function(item) {
-            return item.id !== socket.id;
-        })
-        io.emit("showAllUsers", (active_users));
-        // console.log(socket.id + ' has Got disconnect!');
+        let index = all_users.findIndex((usr => usr.id == socket.id));
+        if(index && index != '') {
+            all_users[index].is_online = false;
+        }
+        socket.emit("showAllUsers", (all_users));
     });
 
 });

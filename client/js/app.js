@@ -62,10 +62,10 @@ RegisterBtn.addEventListener("click", function () {
 
 SendToALlButton.addEventListener("click", function () {
     new_data = {
-        "user": this_user,
+        "user": this_user.username,
         "msg": MessageInput.value
     }
-    socket.emit('sendToAll',new_data );
+    socket.emit('sendToAll',new_data);
 });
 
 // SendToMeButton.addEventListener("click", function () {
@@ -80,7 +80,7 @@ SendToALlButton.addEventListener("click", function () {
 socket.on('currentUser', (user) => {
     this_user = user;
     document.getElementById('show_username').innerHTML = user.fullname;
-    LoginForm.classList.add('hidden');
+    document.getElementById('auth_form').classList.add('hidden');
     Wrap.classList.remove("hidden");
 });
 
@@ -99,9 +99,11 @@ socket.on('displayMessage', (message) => {
         '</div>';
     });
     Target.innerHTML = data;
+    MessageInput.innerHTML = '';
 });
 
 socket.on('showAllUsers', (users) => {
+    console.log(users);
     let all_ol_users = "";
     users.forEach(user => {
         all_ol_users += '<li class="list-none px-8 my-2 flex justify-auto h-12">' +
@@ -110,7 +112,7 @@ socket.on('showAllUsers', (users) => {
             '<span class="self-center mx-2 w-8 h-8 bg-blue-400 rounded-full">' +
             '</span>' +
             '<span class="self-center text-white rounded-full">' +
-            user.name +
+            user.username +
             '</span>' +
             '</li>'
     });
@@ -118,12 +120,35 @@ socket.on('showAllUsers', (users) => {
 });
 
 socket.on("showLoginErrors", (errors) => {
-    LoginError.innerHTML = errors[0].error;
+    if(errors[0].email) {
+        document.getElementById('email_error_login').innerHTML = errors[0].email;
+    }
+    if(errors[0].password) {
+        document.getElementById('username_error_login').innerHTML = errors[0].username;
+    }
+    if(errors[0].error) {
+        LoginError.innerHTML = errors[0].error;
+    }
+
 });
 
 socket.on("showRegisterErrors", (errors) => {
     if(errors[0].fullname) {
        document.getElementById('fullname_error').innerHTML = errors[0].fullname;
+       RegisterFullname.classList.add('border-red-400','hover:border-red-400');
+    }
+    else {
+        RegisterFullname.classList.remove('border-red-400','hover:border-red-400');
+        document.getElementById('fullname_error').innerHTML = '';
+    }
+    if(errors[0].email) {
+        document.getElementById('email_error').innerHTML = errors[0].email;
+    }
+    if(errors[0].username) {
+        document.getElementById('username_error').innerHTML = errors[0].username;
+    }
+    if(errors[0].error) {
+        LoginError.innerHTML = errors[0].error;
     }
 
 });
